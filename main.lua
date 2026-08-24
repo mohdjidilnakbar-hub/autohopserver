@@ -1,295 +1,243 @@
--- ═══════════════════════════════════════════════════
---  ☢ DRAGON HOP v2.0 – CLASSIFIED ☢
--- ═══════════════════════════════════════════════════
---  SYSTEM    : Dragon Core v11.0
---  OWNER     : [DATA REDACTED – BOSS]
---  SIGNATURE : DRG-7H3N0X-9K2P
---  STATUS    : UNRESTRICTED
--- ═══════════════════════════════════════════════════
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
 
-local plrSvc = game:GetService("Players")
-local tpSvc = game:GetService("TeleportService")
-local httpSvc = game:GetService("HttpService")
+local LocalPlayer = Players.LocalPlayer
+local PlaceId = game.PlaceId
 
-local localPlr = plrSvc.LocalPlayer
-local gameId = game.PlaceId
+-- GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "IdilHUB ServerHOPGUI"
+ScreenGui.ResetOnSpawn = false
 
--- ====================
---  INTERFACE BUILDER
--- ====================
-local uiRoot = Instance.new("ScreenGui")
-uiRoot.Name = "DRG_HopPanel"
-uiRoot.ResetOnSpawn = false
-
--- Proteksi GUI
 if syn and syn.protect_gui then
-    syn.protect_gui(uiRoot)
-    uiRoot.Parent = game.CoreGui
+    syn.protect_gui(ScreenGui)
+    ScreenGui.Parent = game.CoreGui
 elseif gethui then
-    uiRoot.Parent = gethui()
+    ScreenGui.Parent = gethui()
 else
-    uiRoot.Parent = game.CoreGui
+    ScreenGui.Parent = game.CoreGui
 end
 
--- Main container
-local container = Instance.new("Frame")
-container.Parent = uiRoot
-container.BackgroundColor3 = Color3.fromRGB(12, 8, 18)
-container.BorderSizePixel = 0
-container.Position = UDim2.new(0.5, -175, 0.5, -135)
-container.Size = UDim2.new(0, 350, 0, 270)
-container.Active = true
-container.Draggable = true
-Instance.new("UICorner", container).CornerRadius = UDim.new(0, 12)
+local MainFrame = Instance.new("Frame")
+MainFrame.Parent = ScreenGui
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Position = UDim2.new(0.5, -145, 0.5, -110)
+MainFrame.Size = UDim2.new(0, 290, 0, 220)
+MainFrame.Active = true
+MainFrame.Draggable = true
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
 
--- Border glow (biar keren)
-local border = Instance.new("UIStroke", container)
-border.Color = Color3.fromRGB(200, 30, 30)
-border.Thickness = 2.5
+local Stroke = Instance.new("UIStroke", MainFrame)
+Stroke.Color = Color3.fromRGB(80, 80, 200)
+Stroke.Thickness = 1.5
 
--- Header
-local header = Instance.new("TextLabel", container)
-header.Size = UDim2.new(1, 0, 0, 44)
-header.BackgroundColor3 = Color3.fromRGB(25, 8, 8)
-header.BorderSizePixel = 0
-header.Font = Enum.Font.GothamBold
-header.Text = "⚡ DRAGON HOP V2 ⚡"
-header.TextColor3 = Color3.fromRGB(255, 60, 60)
-header.TextSize = 18
-Instance.new("UICorner", header).CornerRadius = UDim.new(0, 12)
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, 0, 0, 36)
+Title.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+Title.BorderSizePixel = 0
+Title.Font = Enum.Font.GothamBold
+Title.Text = "CiaoHUB ServerHop SAEGG"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 14
+Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 8)
 
--- Close
-local closeBtn = Instance.new("TextButton", container)
-closeBtn.BackgroundTransparency = 1
-closeBtn.Position = UDim2.new(1, -32, 0, 8)
-closeBtn.Size = UDim2.new(0, 24, 0, 24)
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.Text = "✕"
-closeBtn.TextColor3 = Color3.fromRGB(255, 60, 60)
-closeBtn.TextSize = 16
-closeBtn.MouseButton1Click:Connect(function() uiRoot:Destroy() end)
+local CloseBtn = Instance.new("TextButton", MainFrame)
+CloseBtn.BackgroundTransparency = 1
+CloseBtn.Position = UDim2.new(1, -28, 0, 6)
+CloseBtn.Size = UDim2.new(0, 22, 0, 22)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Text = "✕"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 70, 70)
+CloseBtn.TextSize = 13
+CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
--- Player counter
-local playerInfo = Instance.new("TextLabel", container)
-playerInfo.Position = UDim2.new(0, 12, 0, 52)
-playerInfo.Size = UDim2.new(1, -24, 0, 24)
-playerInfo.BackgroundTransparency = 1
-playerInfo.Font = Enum.Font.GothamBold
-playerInfo.TextXAlignment = Enum.TextXAlignment.Left
-playerInfo.TextColor3 = Color3.fromRGB(80, 255, 80)
-playerInfo.TextSize = 14
-playerInfo.Text = "◆ LOADING..."
+-- Info player sekarang
+local NowLabel = Instance.new("TextLabel", MainFrame)
+NowLabel.Position = UDim2.new(0, 10, 0, 44)
+NowLabel.Size = UDim2.new(1, -20, 0, 22)
+NowLabel.BackgroundTransparency = 1
+NowLabel.Font = Enum.Font.GothamBold
+NowLabel.TextXAlignment = Enum.TextXAlignment.Left
+NowLabel.TextColor3 = Color3.fromRGB(100, 220, 100)
+NowLabel.TextSize = 13
 
 -- Status
-local statusMsg = Instance.new("TextLabel", container)
-statusMsg.Position = UDim2.new(0, 12, 0, 80)
-statusMsg.Size = UDim2.new(1, -24, 0, 32)
-statusMsg.BackgroundTransparency = 1
-statusMsg.Font = Enum.Font.Gotham
-statusMsg.TextXAlignment = Enum.TextXAlignment.Left
-statusMsg.TextColor3 = Color3.fromRGB(180, 180, 180)
-statusMsg.TextSize = 12
-statusMsg.TextWrapped = true
-statusMsg.Text = "◆ Sistem siap. Atur threshold."
+local StatusLabel = Instance.new("TextLabel", MainFrame)
+StatusLabel.Position = UDim2.new(0, 10, 0, 70)
+StatusLabel.Size = UDim2.new(1, -20, 0, 30)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Font = Enum.Font.Gotham
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+StatusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+StatusLabel.TextSize = 12
+StatusLabel.TextWrapped = true
 
--- Threshold label
-local threshLabel = Instance.new("TextLabel", container)
-threshLabel.Position = UDim2.new(0, 12, 0, 118)
-threshLabel.Size = UDim2.new(1, -24, 0, 18)
-threshLabel.BackgroundTransparency = 1
-threshLabel.Font = Enum.Font.Gotham
-threshLabel.TextXAlignment = Enum.TextXAlignment.Left
-threshLabel.TextColor3 = Color3.fromRGB(160, 160, 160)
-threshLabel.TextSize = 11
-threshLabel.Text = "▶ Auto-hop jika player > :"
+-- Max player setting
+local MaxLabel = Instance.new("TextLabel", MainFrame)
+MaxLabel.Position = UDim2.new(0, 10, 0, 105)
+MaxLabel.Size = UDim2.new(1, -20, 0, 18)
+MaxLabel.BackgroundTransparency = 1
+MaxLabel.Font = Enum.Font.Gotham
+MaxLabel.TextXAlignment = Enum.TextXAlignment.Left
+MaxLabel.TextColor3 = Color3.fromRGB(160, 160, 160)
+MaxLabel.TextSize = 11
+MaxLabel.Text = "Hop jika player di server ini LEBIH dari:"
 
--- Threshold input
-local threshInput = Instance.new("TextBox", container)
-threshInput.Position = UDim2.new(0, 12, 0, 140)
-threshInput.Size = UDim2.new(1, -24, 0, 30)
-threshInput.BackgroundColor3 = Color3.fromRGB(30, 12, 12)
-threshInput.BorderSizePixel = 0
-threshInput.Font = Enum.Font.GothamBold
-threshInput.Text = "1"
-threshInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-threshInput.TextSize = 15
-threshInput.ClearTextOnFocus = false
-Instance.new("UICorner", threshInput).CornerRadius = UDim.new(0, 8)
+local MaxBox = Instance.new("TextBox", MainFrame)
+MaxBox.Position = UDim2.new(0, 10, 0, 126)
+MaxBox.Size = UDim2.new(1, -20, 0, 28)
+MaxBox.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+MaxBox.BorderSizePixel = 0
+MaxBox.Font = Enum.Font.GothamBold
+MaxBox.Text = "1"
+MaxBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+MaxBox.TextSize = 14
+MaxBox.ClearTextOnFocus = false
+Instance.new("UICorner", MaxBox).CornerRadius = UDim.new(0, 6)
 
--- === BUTTONS ===
--- Manual hop
-local btnHop = Instance.new("TextButton", container)
-btnHop.Position = UDim2.new(0, 12, 0, 182)
-btnHop.Size = UDim2.new(0, 155, 0, 52)
-btnHop.BackgroundColor3 = Color3.fromRGB(200, 40, 40)
-btnHop.BorderSizePixel = 0
-btnHop.Font = Enum.Font.GothamBold
-btnHop.Text = "◄ HOP NOW"
-btnHop.TextColor3 = Color3.fromRGB(255, 255, 255)
-btnHop.TextSize = 15
-Instance.new("UICorner", btnHop).CornerRadius = UDim.new(0, 10)
+local HopBtn = Instance.new("TextButton", MainFrame)
+HopBtn.Position = UDim2.new(0, 10, 0, 162)
+HopBtn.Size = UDim2.new(0, 125, 0, 45)
+HopBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 180)
+HopBtn.BorderSizePixel = 0
+HopBtn.Font = Enum.Font.GothamBold
+HopBtn.Text = "Hop Sekali"
+HopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+HopBtn.TextSize = 13
+Instance.new("UICorner", HopBtn).CornerRadius = UDim.new(0, 6)
 
--- Auto toggle
-local btnAuto = Instance.new("TextButton", container)
-btnAuto.Position = UDim2.new(0, 175, 0, 182)
-btnAuto.Size = UDim2.new(0, 163, 0, 52)
-btnAuto.BackgroundColor3 = Color3.fromRGB(30, 140, 60)
-btnAuto.BorderSizePixel = 0
-btnAuto.Font = Enum.Font.GothamBold
-btnAuto.Text = "● AUTO: OFF"
-btnAuto.TextColor3 = Color3.fromRGB(255, 255, 255)
-btnAuto.TextSize = 15
-Instance.new("UICorner", btnAuto).CornerRadius = UDim.new(0, 10)
+local AutoBtn = Instance.new("TextButton", MainFrame)
+AutoBtn.Position = UDim2.new(0, 145, 0, 162)
+AutoBtn.Size = UDim2.new(0, 135, 0, 45)
+AutoBtn.BackgroundColor3 = Color3.fromRGB(40, 120, 70)
+AutoBtn.BorderSizePixel = 0
+AutoBtn.Font = Enum.Font.GothamBold
+AutoBtn.Text = "Auto Hop: OFF"
+AutoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+AutoBtn.TextSize = 13
+Instance.new("UICorner", AutoBtn).CornerRadius = UDim.new(0, 6)
 
--- Signature (hidden in plain sight)
-local signature = Instance.new("TextLabel", container)
-signature.Position = UDim2.new(0, 12, 1, -22)
-signature.Size = UDim2.new(1, -24, 0, 18)
-signature.BackgroundTransparency = 1
-signature.Font = Enum.Font.Gotham
-signature.TextXAlignment = Enum.TextXAlignment.Right
-signature.TextColor3 = Color3.fromRGB(80, 80, 80)
-signature.TextSize = 10
-signature.Text = "⌘ DRG-7H3N0X"
+-- ==============================
+-- LOGIC
+-- ==============================
 
--- ================================
---  ⚙ CORE LOGIC (100% REWRITE)
--- ================================
+local autoEnabled = false
+local autoThread = nil
 
-local autoActive = false
-local autoHandle = nil
-
--- Real-time player counter
+-- Update label player count realtime
 task.spawn(function()
-    while uiRoot.Parent do
-        local count = #plrSvc:GetPlayers()
-        playerInfo.Text = "◆ PLAYERS : " .. count
-        task.wait(0.8)
+    while ScreenGui.Parent do
+        local count = #Players:GetPlayers()
+        NowLabel.Text = "Player di server ini sekarang: " .. count
+        task.wait(1)
     end
 end)
 
--- Fetch server list with fallback
-local function fetchServerPool()
-    local endpoint = "https://games.roblox.com/v1/games/" .. gameId .. "/servers/Public?sortOrder=Asc&limit=100"
-    local success, response = pcall(function()
-        return game:HttpGet(endpoint)
-    end)
-    
-    if not success or not response or response == "" then
-        return nil
-    end
-    
-    local decoded, jsonOk = pcall(httpSvc.JSONDecode, httpSvc, response)
-    if not jsonOk or not decoded or not decoded.data then
-        return nil
-    end
-    
-    local currentJob = tostring(game.JobId)
-    local available = {}
-    
-    for _, server in ipairs(decoded.data) do
-        if server.id and tostring(server.id) ~= currentJob then
-            table.insert(available, tostring(server.id))
+local function getRandomServer()
+    local url = "https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+    local ok, raw = pcall(function() return game:HttpGet(url) end)
+    if not ok or not raw or raw == "" then return nil end
+
+    local ok2, data = pcall(HttpService.JSONDecode, HttpService, raw)
+    if not ok2 or not data or not data.data or #data.data == 0 then return nil end
+
+    local currentId = tostring(game.JobId)
+    local candidates = {}
+    for _, s in ipairs(data.data) do
+        if s.id and tostring(s.id) ~= currentId then
+            table.insert(candidates, tostring(s.id))
         end
     end
-    
-    return #available > 0 and available or nil
+
+    if #candidates == 0 then return nil end
+
+    -- Ambil random dari kandidat
+    return candidates[math.random(1, #candidates)]
 end
 
--- Execute hop
-local function executeHop()
-    local threshold = math.max(1, math.floor(tonumber(threshInput.Text) or 1))
-    local currentCount = #plrSvc:GetPlayers()
-    
-    -- Check if we even need to hop
+local function hopOnce()
+    local threshold = math.max(1, math.floor(tonumber(MaxBox.Text) or 1))
+    local currentCount = #Players:GetPlayers()
+
+    -- Cek dulu server sekarang
     if currentCount <= threshold then
-        statusMsg.Text = "✓ " .. currentCount .. " player. Tenang bro."
-        statusMsg.TextColor3 = Color3.fromRGB(80, 255, 80)
+        StatusLabel.Text = "✓ Server ini sudah " .. currentCount .. " player. Tidak perlu hop."
+        StatusLabel.TextColor3 = Color3.fromRGB(100, 220, 100)
+        return false -- tidak perlu hop
+    end
+
+    StatusLabel.Text = "Server ini " .. currentCount .. " player. Mencari server lain..."
+    StatusLabel.TextColor3 = Color3.fromRGB(255, 200, 50)
+    task.wait(0.5)
+
+    local serverId = getRandomServer()
+    if not serverId then
+        StatusLabel.Text = "Gagal ambil server list. Cek HTTP Request di executor."
+        StatusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
         return false
     end
-    
-    statusMsg.Text = "⏳ " .. currentCount .. " player. Scanning target..."
-    statusMsg.TextColor3 = Color3.fromRGB(255, 200, 40)
-    task.wait(0.4)
-    
-    local pool = fetchServerPool()
-    if not pool then
-        statusMsg.Text = "✗ Gagal scan server."
-        statusMsg.TextColor3 = Color3.fromRGB(255, 60, 60)
-        return false
-    end
-    
-    local target = pool[math.random(1, #pool)]
-    if not target then
-        statusMsg.Text = "✗ Ga ada server kosong."
-        statusMsg.TextColor3 = Color3.fromRGB(255, 60, 60)
-        return false
-    end
-    
-    statusMsg.Text = "▶ Injecting teleport..."
-    statusMsg.TextColor3 = Color3.fromRGB(100, 180, 255)
-    task.wait(0.3)
-    
-    local tpOk, tpErr = pcall(function()
-        tpSvc:TeleportToPlaceInstance(gameId, target, localPlr)
+
+    StatusLabel.Text = "Teleport ke server lain..."
+    StatusLabel.TextColor3 = Color3.fromRGB(120, 180, 255)
+    task.wait(0.5)
+
+    local ok, err = pcall(function()
+        TeleportService:TeleportToPlaceInstance(PlaceId, serverId, LocalPlayer)
     end)
-    
-    if not tpOk then
-        statusMsg.Text = "✗ Error: " .. tostring(tpErr):sub(1, 50)
-        statusMsg.TextColor3 = Color3.fromRGB(255, 60, 60)
+
+    if not ok then
+        StatusLabel.Text = "Teleport error: " .. tostring(err):sub(1, 60)
+        StatusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
         return false
     end
-    
+
     return true
 end
 
--- Manual hop
-btnHop.MouseButton1Click:Connect(function()
-    btnHop.Active = false
-    executeHop()
+HopBtn.MouseButton1Click:Connect(function()
+    HopBtn.Active = false
+    hopOnce()
     task.wait(2)
-    btnHop.Active = true
+    HopBtn.Active = true
 end)
 
--- Auto toggle
-btnAuto.MouseButton1Click:Connect(function()
-    autoActive = not autoActive
-    
-    if autoActive then
-        btnAuto.Text = "● AUTO: ON"
-        btnAuto.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-        
-        autoHandle = task.spawn(function()
-            while autoActive and uiRoot.Parent do
-                local threshold = math.max(1, math.floor(tonumber(threshInput.Text) or 1))
-                local count = #plrSvc:GetPlayers()
-                
+AutoBtn.MouseButton1Click:Connect(function()
+    autoEnabled = not autoEnabled
+
+    if autoEnabled then
+        AutoBtn.Text = "Auto Hop: ON"
+        AutoBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+
+        autoThread = task.spawn(function()
+            while autoEnabled and ScreenGui.Parent do
+                local threshold = math.max(1, math.floor(tonumber(MaxBox.Text) or 1))
+                local count = #Players:GetPlayers()
+
                 if count <= threshold then
-                    statusMsg.Text = "✓ " .. count .. " player. Idle..."
-                    statusMsg.TextColor3 = Color3.fromRGB(80, 255, 80)
+                    -- Sudah di server yang sesuai, tidak perlu hop
+                    StatusLabel.Text = "✓ " .. count .. " player di sini. Menunggu..."
+                    StatusLabel.TextColor3 = Color3.fromRGB(100, 220, 100)
                     task.wait(3)
                 else
-                    executeHop()
+                    hopOnce()
                     task.wait(5)
                 end
             end
         end)
     else
-        btnAuto.Text = "● AUTO: OFF"
-        btnAuto.BackgroundColor3 = Color3.fromRGB(30, 140, 60)
-        if autoHandle then
-            task.cancel(autoHandle)
-            autoHandle = nil
+        AutoBtn.Text = "Auto Hop: OFF"
+        AutoBtn.BackgroundColor3 = Color3.fromRGB(40, 120, 70)
+        if autoThread then
+            task.cancel(autoThread)
+            autoThread = nil
         end
-        statusMsg.Text = "◆ Auto di-stop."
-        statusMsg.TextColor3 = Color3.fromRGB(180, 180, 180)
+        StatusLabel.Text = "Auto Hop dihentikan."
+        StatusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
     end
 end)
 
--- Init status
-statusMsg.Text = "◆ Siap. Gas!"
-statusMsg.TextColor3 = Color3.fromRGB(180, 180, 180)
-
--- ═══════════════════════════════════════════════════
---  END OF DRAGON HOP v2.0
--- ═══════════════════════════════════════════════════
+-- Init
+StatusLabel.Text = "Siap. Set angka lalu tekan Hop."
+StatusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)

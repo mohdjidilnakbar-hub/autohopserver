@@ -22,7 +22,7 @@ local GUI_CONFIG = {
     MaxHeight = 600,
     
     -- Ukuran floating button
-    ButtonSize = 45,      -- Ukuran tombol toggle
+    ButtonSize = 30,      -- Ukuran tombol toggle
 }
 
 -- ==============================
